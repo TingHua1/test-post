@@ -253,8 +253,10 @@ if check_installed; then
                 ;;
         esac
     else
-        # 重复执行时，自动更新并重启
-        update_and_restart
+        # 重复执行但未指定模式，显示菜单
+        echo -e "${YELLOW}请选择操作:${PLAIN}"
+        echo ""
+        show_menu
     fi
 else
     # 首次安装
