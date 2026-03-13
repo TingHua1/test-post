@@ -93,7 +93,8 @@ install_dependencies() {
     fi
     
     # 安装 Python 依赖
-    $PIP_CMD install flask psutil requests --break-system-packages 2>/dev/null || $PIP_CMD install flask psutil requests --break-system-packages
+    $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed 2>/dev/null || \
+    $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed
 }
 
 # 克隆或更新项目
@@ -134,11 +135,25 @@ clone_project() {
         return
     fi
     
-    # 如果目录已存在，更新代码
+    # 如果目录已存在，检查是否是 git 仓库
     if [[ -d "$INSTALL_DIR" ]]; then
-        echo -e "${GREEN}检测到已存在的安装，正在更新...${PLAIN}"
-        cd "$INSTALL_DIR" && git pull
-        echo -e "${GREEN}✅ 项目更新完成！${PLAIN}"
+        if [[ -d "$INSTALL_DIR/.git" ]]; then
+            echo -e "${GREEN}检测到已存在的安装，正在更新...${PLAIN}"
+            cd "$INSTALL_DIR" && git pull
+            echo -e "${GREEN}✅ 项目更新完成！${PLAIN}"
+        else
+            echo -e "${YELLOW}检测到已存在的目录但不是 git 仓库，使用 wget 更新...${PLAIN}"
+            cd "$INSTALL_DIR" || exit
+            wget -O app.py https://raw.githubusercontent.com/TingHua1/test-post/main/app.py || true
+            wget -O server.py https://raw.githubusercontent.com/TingHua1/test-post/main/server.py || true
+            wget -O client.py https://raw.githubusercontent.com/TingHua1/test-post/main/client.py || true
+            wget -O install.sh https://raw.githubusercontent.com/TingHua1/test-post/main/install.sh || true
+            mkdir -p templates
+            wget -O templates/index.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/index.html || true
+            wget -O templates/login.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/login.html || true
+            wget -O templates/settings.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/settings.html || true
+            echo -e "${GREEN}✅ 项目文件更新完成！${PLAIN}"
+        fi
     else
         # 创建父目录（如果不存在）
         PARENT_DIR=$(dirname "$INSTALL_DIR")
