@@ -56,6 +56,35 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
 
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    if request.method == 'POST':
+        current_username = request.form.get('current_username')
+        current_password = request.form.get('current_password')
+        new_username = request.form.get('new_username')
+        new_password = request.form.get('new_password')
+        
+        # 验证当前账号密码
+        if current_username != ADMIN_USERNAME or current_password != ADMIN_PASSWORD:
+            flash('当前用户名或密码错误', 'error')
+            return render_template('settings.html', current_username=ADMIN_USERNAME)
+        
+        # 更新账号密码
+        global ADMIN_USERNAME, ADMIN_PASSWORD
+        if new_username:
+            ADMIN_USERNAME = new_username
+        if new_password:
+            ADMIN_PASSWORD = new_password
+        
+        # 更新会话中的用户名
+        session['username'] = ADMIN_USERNAME
+        
+        flash('账号密码修改成功！', 'success')
+        return redirect(url_for('index'))
+    
+    return render_template('settings.html', current_username=ADMIN_USERNAME)
+
 @app.route('/api/report', methods=['POST'])
 def report():
     data = request.json

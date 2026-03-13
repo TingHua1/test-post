@@ -108,6 +108,9 @@
                             <span class="nav-link"><span class="admin-badge">👑 管理员</span></span>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('settings') }}">⚙️ 账号设置</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('logout') }}">退出登录</a>
                         </li>
                     {% else %}
