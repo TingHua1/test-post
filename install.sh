@@ -216,7 +216,7 @@ show_menu() {
     echo "  4. 停止所有监控进程"
     echo "  0. 退出"
     echo ""
-    read -p "请选择 [0-4]: " choice
+    read -p "请选择 [0-4]: " choice < /dev/tty
     
     case $choice in
         1)
