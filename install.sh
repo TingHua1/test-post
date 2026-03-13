@@ -99,8 +99,8 @@ install_dependencies() {
     # 安装 Python 依赖
     if [[ -f /usr/bin/apk ]] || [[ -f /sbin/apk ]]; then
         # Alpine Linux
-        $PIP_CMD install flask psutil requests --ignore-installed 2>/dev/null || \
-        $PIP_CMD install flask psutil requests --ignore-installed
+        $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed 2>/dev/null || \
+        $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed
     else
         # 其他 Linux 系统
         $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed 2>/dev/null || \
