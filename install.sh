@@ -265,8 +265,11 @@ if check_installed; then
                 ;;
         esac
     else
-        # 重复执行但未指定模式，显示菜单
-        echo -e "${YELLOW}请选择操作:${PLAIN}"
+        # 重复执行但未指定模式，先更新再显示菜单
+        echo -e "${YELLOW}正在更新项目...${PLAIN}"
+        install_dependencies
+        clone_project
+        echo -e "${GREEN}✅ 项目更新完成！${PLAIN}"
         echo ""
         show_menu
     fi
