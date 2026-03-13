@@ -57,7 +57,19 @@ detect_current_mode() {
 install_dependencies() {
     echo -e "${YELLOW}正在安装必要依赖...${PLAIN}"
     if [[ -f /usr/bin/apt ]]; then
-        apt update && apt install -y python3 python3-pip git
+        # 先尝试修复依赖
+        apt --fix-broken install -y || true
+        apt update
+        # 尝试安装基础包
+        if ! apt install -y python3 python3-pip git; then
+            echo -e "${YELLOW}apt 安装失败，尝试单独安装...${PLAIN}"
+            # 单独安装 python3
+            apt install -y python3 || true
+            # 单独安装 python3-pip
+            apt install -y python3-pip || true
+            # 单独安装 git
+            apt install -y git || true
+        fi
     elif [[ -f /usr/bin/dnf ]]; then
         dnf install -y python3 python3-pip git
     elif [[ -f /usr/bin/yum ]]; then
@@ -67,13 +79,60 @@ install_dependencies() {
         exit 1
     fi
     
+    # 检查是否安装成功
+    if ! command -v python3 &> /dev/null; then
+        echo -e "${RED}python3 安装失败，请手动安装${PLAIN}"
+        exit 1
+    fi
+    
+    if ! command -v pip3 &> /dev/null; then
+        echo -e "${YELLOW}pip3 未安装，尝试使用 python3 -m pip${PLAIN}"
+        PIP_CMD="python3 -m pip"
+    else
+        PIP_CMD="pip3"
+    fi
+    
     # 安装 Python 依赖
-    pip3 install flask psutil requests --break-system-packages 2>/dev/null || pip3 install flask psutil requests
+    $PIP_CMD install flask psutil requests --break-system-packages 2>/dev/null || $PIP_CMD install flask psutil requests
 }
 
 # 克隆或更新项目
 clone_project() {
     echo -e "${YELLOW}正在克隆项目...${PLAIN}"
+    
+    # 检查 git 是否安装
+    if ! command -v git &> /dev/null; then
+        echo -e "${YELLOW}git 未安装，尝试使用 wget 下载...${PLAIN}"
+        if command -v wget &> /dev/null; then
+            # 创建安装目录
+            PARENT_DIR=$(dirname "$INSTALL_DIR")
+            if [[ ! -d "$PARENT_DIR" ]]; then
+                mkdir -p "$PARENT_DIR"
+            fi
+            if [[ ! -d "$INSTALL_DIR" ]]; then
+                mkdir -p "$INSTALL_DIR"
+            fi
+            
+            # 下载项目文件
+            cd "$INSTALL_DIR" || exit
+            wget -O app.py https://raw.githubusercontent.com/TingHua1/test-post/main/app.py || true
+            wget -O server.py https://raw.githubusercontent.com/TingHua1/test-post/main/server.py || true
+            wget -O client.py https://raw.githubusercontent.com/TingHua1/test-post/main/client.py || true
+            wget -O install.sh https://raw.githubusercontent.com/TingHua1/test-post/main/install.sh || true
+            
+            # 创建 templates 目录
+            mkdir -p templates
+            wget -O templates/index.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/index.html || true
+            wget -O templates/login.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/login.html || true
+            wget -O templates/settings.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/settings.html || true
+            
+            echo -e "${GREEN}✅ 项目文件下载完成！${PLAIN}"
+        else
+            echo -e "${RED}git 和 wget 都未安装，无法获取项目文件${PLAIN}"
+            exit 1
+        fi
+        return
+    fi
     
     # 如果目录已存在，更新代码
     if [[ -d "$INSTALL_DIR" ]]; then
