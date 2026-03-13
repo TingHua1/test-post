@@ -59,6 +59,9 @@ def logout():
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
+    # 声明全局变量
+    global ADMIN_USERNAME, ADMIN_PASSWORD
+    
     if request.method == 'POST':
         current_username = request.form.get('current_username')
         current_password = request.form.get('current_password')
@@ -71,7 +74,6 @@ def settings():
             return render_template('settings.html', current_username=ADMIN_USERNAME)
         
         # 更新账号密码
-        global ADMIN_USERNAME, ADMIN_PASSWORD
         if new_username:
             ADMIN_USERNAME = new_username
         if new_password:
