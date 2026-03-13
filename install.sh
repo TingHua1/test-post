@@ -2,7 +2,7 @@
 
 # 星汐 VPS 监控一键安装脚本 🐷
 # 支持 Ubuntu/Debian/CentOS/Alma/Rocky
-# 使用方法: curl -fsSL https://raw.githubusercontent.com/TingHua1/test-post/main/install.sh | bash
+# 使用方法: curl -fsSL https://raw.githubusercontent.com/TingHua1/test-post/main/install.sh | bash -s -- /your/custom/path
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -12,7 +12,13 @@ PLAIN='\033[0m'
 [[ $EUID -ne 0 ]] && echo -e "${RED}错误：${PLAIN} 必须使用 root 用户运行此脚本！\n" && exit 1
 
 REPO_URL="https://github.com/TingHua1/test-post.git"
-INSTALL_DIR="/root/vps-monitor"
+
+# 支持自定义安装目录
+if [[ -n "$1" ]]; then
+    INSTALL_DIR="$1"
+else
+    INSTALL_DIR="/root/vps-monitor"
+fi
 
 echo -e "${GREEN}🌟 星汐 VPS 监控一键安装脚本 🌟${PLAIN}"
 echo ""
@@ -38,17 +44,40 @@ install_dependencies() {
 # 克隆项目
 clone_project() {
     echo -e "${YELLOW}正在克隆项目...${PLAIN}"
+    
+    # 如果目录已存在，更新代码
     if [[ -d "$INSTALL_DIR" ]]; then
         echo -e "${YELLOW}检测到已存在的安装目录，正在更新...${PLAIN}"
         cd "$INSTALL_DIR" && git pull
     else
+        # 创建父目录（如果不存在）
+        PARENT_DIR=$(dirname "$INSTALL_DIR")
+        if [[ ! -d "$PARENT_DIR" ]]; then
+            mkdir -p "$PARENT_DIR"
+        fi
+        
+        # 克隆到指定目录
         git clone "$REPO_URL" "$INSTALL_DIR"
+        
+        # 检查克隆是否成功
+        if [[ ! -d "$INSTALL_DIR" ]]; then
+            echo -e "${RED}克隆失败，请检查网络连接或目录权限${PLAIN}"
+            exit 1
+        fi
     fi
 }
 
 # 启动面板端
 start_panel() {
     echo -e "${YELLOW}正在启动面板端...${PLAIN}"
+    
+    # 检查目录是否存在
+    if [[ ! -d "$INSTALL_DIR" ]]; then
+        echo -e "${RED}错误：安装目录 ${INSTALL_DIR} 不存在！${PLAIN}"
+        echo -e "${YELLOW}请先运行安装选项或检查目录路径${PLAIN}"
+        exit 1
+    fi
+    
     cd "$INSTALL_DIR" || exit
     
     # 停止已有的进程
@@ -73,6 +102,14 @@ start_panel() {
 # 启动客户端
 start_client() {
     echo -e "${YELLOW}正在启动客户端...${PLAIN}"
+    
+    # 检查目录是否存在
+    if [[ ! -d "$INSTALL_DIR" ]]; then
+        echo -e "${RED}错误：安装目录 ${INSTALL_DIR} 不存在！${PLAIN}"
+        echo -e "${YELLOW}请先运行安装选项或检查目录路径${PLAIN}"
+        exit 1
+    fi
+    
     cd "$INSTALL_DIR" || exit
     
     read -p "请输入面板服务器的公网 IP: " master_ip
@@ -134,8 +171,15 @@ show_menu() {
 }
 
 # 如果直接传入参数，执行对应功能
-if [[ $# -eq 1 ]]; then
-    case $1 in
+# 支持格式: bash install.sh [panel|client] [安装目录]
+if [[ $# -ge 1 ]]; then
+    # 第一个参数是模式，第二个参数是目录
+    MODE="$1"
+    if [[ -n "$2" ]]; then
+        INSTALL_DIR="$2"
+    fi
+    
+    case $MODE in
         panel)
             install_dependencies
             clone_project
