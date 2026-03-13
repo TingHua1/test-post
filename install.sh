@@ -93,7 +93,7 @@ install_dependencies() {
     fi
     
     # 安装 Python 依赖
-    $PIP_CMD install flask psutil requests --break-system-packages 2>/dev/null || $PIP_CMD install flask psutil requests
+    $PIP_CMD install flask psutil requests --break-system-packages 2>/dev/null || $PIP_CMD install flask psutil requests --break-system-packages
 }
 
 # 克隆或更新项目
