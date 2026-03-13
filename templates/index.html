@@ -24,6 +24,8 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .navbar-brand { font-weight: bold; color: white !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+        .nav-link { color: rgba(255,255,255,0.9) !important; }
+        .nav-link:hover { color: white !important; }
         .card {
             background: var(--glass-bg);
             backdrop-filter: blur(15px);
@@ -58,6 +60,40 @@
             50% { transform: translateY(-15px); }
             100% { transform: translateY(0px); }
         }
+        .btn-manage {
+            background: rgba(255, 133, 162, 0.1);
+            border: 1px solid var(--primary-pink);
+            color: var(--primary-pink);
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        .btn-manage:hover {
+            background: var(--primary-pink);
+            color: white;
+        }
+        .btn-danger-custom {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        .btn-danger-custom:hover {
+            background: #e74c3c;
+            color: white;
+        }
+        .admin-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
     </style>
     <meta http-equiv="refresh" content="10">
 </head>
@@ -65,20 +101,52 @@
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="#">🌸 星汐の幻想监控空间 🌸</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if logged_in %}
+                        <li class="nav-item">
+                            <span class="nav-link"><span class="admin-badge">👑 管理员</span></span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('logout') }}">退出登录</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">管理员登录</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </nav>
 
     <div class="container mt-5">
+        {% if logged_in %}
+        <div class="alert alert-info mb-4" style="border-radius: 15px; border: none; background: rgba(255, 133, 162, 0.1); color: #666;">
+            <strong>💡 管理提示：</strong>您已登录为管理员，可以修改服务器名称或删除离线服务器。
+        </div>
+        {% endif %}
+
         <div class="row">
             {% for id, server in servers.items() %}
             <div class="col-md-4">
-                <div class="card p-4">
+                <div class="card p-4" id="server-{{ id }}">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0" style="color: var(--primary-pink); font-weight: bold;">{{ server.name or id }}</h5>
-                        <span class="{{ 'status-online' if server.online else 'status-offline' }}">
+                        <h5 class="mb-0" style="color: var(--primary-pink); font-weight: bold;" id="name-{{ id }}">{{ server.name or id }}</h5>
+                        <span class="{{ 'status-online' if server.online else 'status-offline' }}" id="status-{{ id }}">
                             {{ '● 在线中' if server.online else '● 离线啦' }}
                         </span>
                     </div>
+                    
+                    {% if logged_in %}
+                    <div class="mb-2">
+                        <button class="btn-manage me-2" onclick="renameServer('{{ id }}', '{{ server.name or id }}')">✏️ 修改名称</button>
+                        {% if not server.online %}
+                        <button class="btn-danger-custom" onclick="deleteServer('{{ id }}')">🗑️ 删除</button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
                     <div class="mb-3">
                         <span class="badge-anime">延迟: {{ server.latency }}</span>
                     </div>
@@ -147,5 +215,56 @@
             <text x="50" y="65" font-size="40" text-anchor="middle">🐷</text>
         </svg>
     </div>
+
+    {% if logged_in %}
+    <script>
+        // 修改服务器名称
+        function renameServer(serverId, currentName) {
+            const newName = prompt('请输入新的服务器名称:', currentName);
+            if (newName && newName !== currentName) {
+                fetch(`/api/server/${serverId}/rename`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: newName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById(`name-${serverId}`).textContent = newName;
+                        alert('✅ 名称修改成功！');
+                    } else {
+                        alert('❌ 修改失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('❌ 请求失败: ' + error);
+                });
+            }
+        }
+
+        // 删除服务器
+        function deleteServer(serverId) {
+            if (confirm('确定要删除这个服务器吗？此操作不可恢复！')) {
+                fetch(`/api/server/${serverId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById(`server-${serverId}`).remove();
+                        alert('✅ 服务器已删除！');
+                    } else {
+                        alert('❌ 删除失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('❌ 请求失败: ' + error);
+                });
+            }
+        }
+    </script>
+    {% endif %}
 </body>
 </html>
