@@ -198,6 +198,14 @@ update_and_restart() {
     fi
 }
 
+# 停止所有服务
+stop_all() {
+    echo -e "${YELLOW}正在停止所有监控进程...${PLAIN}"
+    pkill -f app.py 2>/dev/null
+    pkill -f client.py 2>/dev/null
+    echo -e "${GREEN}✅ 所有监控进程已停止${PLAIN}"
+}
+
 # 主菜单
 show_menu() {
     echo ""
@@ -205,9 +213,10 @@ show_menu() {
     echo "  1. 安装并启动 [面板端] (监控控制台)"
     echo "  2. 安装并启动 [客户端] (被监控 VPS)"
     echo "  3. 仅安装依赖"
+    echo "  4. 停止所有监控进程"
     echo "  0. 退出"
     echo ""
-    read -p "请选择 [0-3]: " choice
+    read -p "请选择 [0-4]: " choice
     
     case $choice in
         1)
@@ -225,6 +234,9 @@ show_menu() {
             clone_project
             echo -e "${GREEN}✅ 安装完成！${PLAIN}"
             echo -e "安装目录: ${INSTALL_DIR}"
+            ;;
+        4)
+            stop_all
             ;;
         *)
             echo -e "${YELLOW}已退出${PLAIN}"

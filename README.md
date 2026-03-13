@@ -83,10 +83,11 @@ test-post/
 ├── app.py              # 主应用文件（面板端）
 ├── server.py           # 服务器端 API
 ├── client.py           # 客户端监控脚本
-├── start.sh            # 启动脚本
-├── install.sh          # 一键安装脚本
+├── install.sh          # 一键安装脚本（支持安装、更新、停止）
 ├── templates/
-│   └── index.html      # 前端模板
+│   ├── index.html      # 前端模板
+│   ├── login.html      # 登录页面
+│   └── settings.html   # 账号设置页面
 ├── .gitignore          # Git 忽略文件
 └── README.md           # 项目说明文档
 ```
@@ -161,6 +162,17 @@ tail -f /root/vps-monitor/client.log
 
 ### 停止服务
 
+#### 方式一：使用安装脚本（推荐）
+
+```bash
+# 下载脚本并执行停止
+wget https://raw.githubusercontent.com/TingHua1/test-post/main/install.sh
+bash install.sh
+# 然后选择选项 4
+```
+
+#### 方式二：手动停止
+
 ```bash
 # 停止面板端
 pkill -f app.py
@@ -171,6 +183,19 @@ pkill -f client.py
 # 停止所有监控进程
 pkill -f "app.py|client.py"
 ```
+
+### 更新项目
+
+当有新版本发布时，重复执行安装脚本即可自动更新：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TingHua1/test-post/main/install.sh | bash
+```
+
+脚本会自动：
+1. 更新代码到最新版本
+2. 安装新依赖
+3. 显示菜单供你选择操作
 
 ### 重启服务
 
@@ -205,6 +230,13 @@ nohup python3 /root/vps-monitor/client.py > /root/vps-monitor/client.log 2>&1 &
 3. 检查服务器是否安装了 ping 命令
 
 ## 📝 更新日志
+
+### v1.1.0 (2026-03-13)
+- 🔐 添加登录验证功能
+- 👤 支持修改账号密码
+- 🛠️ 合并 start.sh 到 install.sh
+- 🔄 支持项目自动更新
+- 🛑 支持通过脚本停止服务
 
 ### v1.0.0 (2026-03-13)
 - ✨ 初始版本发布
