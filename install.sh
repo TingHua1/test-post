@@ -74,6 +74,10 @@ install_dependencies() {
         dnf install -y python3 python3-pip git
     elif [[ -f /usr/bin/yum ]]; then
         yum install -y python3 python3-pip git
+    elif [[ -f /usr/bin/apk ]]; then
+        # Alpine Linux
+        apk update
+        apk add python3 py3-pip git
     else
         echo -e "${RED}未能识别的系统，请手动安装 python3, pip, git${PLAIN}"
         exit 1
