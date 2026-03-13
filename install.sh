@@ -13,12 +13,22 @@ PLAIN='\033[0m'
 
 REPO_URL="https://github.com/TingHua1/test-post.git"
 
-# 支持自定义安装目录
-if [[ -n "$1" ]]; then
-    INSTALL_DIR="$1"
-else
-    INSTALL_DIR="/root/vps-monitor"
-fi
+# 解析参数
+MODE=""
+INSTALL_DIR="/root/vps-monitor"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        panel|client)
+            MODE="$1"
+            shift
+            ;;
+        *)
+            INSTALL_DIR="$1"
+            shift
+            ;;
+    esac
+done
 
 echo -e "${GREEN}🌟 星汐 VPS 监控一键安装脚本 🌟${PLAIN}"
 echo ""
@@ -170,15 +180,8 @@ show_menu() {
     esac
 }
 
-# 如果直接传入参数，执行对应功能
-# 支持格式: bash install.sh [panel|client] [安装目录]
-if [[ $# -ge 1 ]]; then
-    # 第一个参数是模式，第二个参数是目录
-    MODE="$1"
-    if [[ -n "$2" ]]; then
-        INSTALL_DIR="$2"
-    fi
-    
+# 根据模式执行对应功能
+if [[ -n "$MODE" ]]; then
     case $MODE in
         panel)
             install_dependencies
@@ -189,9 +192,6 @@ if [[ $# -ge 1 ]]; then
             install_dependencies
             clone_project
             start_client
-            ;;
-        *)
-            show_menu
             ;;
     esac
 else
