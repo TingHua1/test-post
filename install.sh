@@ -193,8 +193,8 @@ update_and_restart() {
         echo -e "${GREEN}检测到客户端正在运行，正在重启...${PLAIN}"
         start_client
     else
-        echo -e "${YELLOW}未检测到运行中的服务，请选择启动模式${PLAIN}"
-        show_menu
+        echo -e "${YELLOW}未检测到运行中的服务，默认启动面板端...${PLAIN}"
+        start_panel
     fi
 }
 
