@@ -33,6 +33,26 @@ done
 echo -e "${GREEN}🌟 星汐 VPS 监控一键安装脚本 🌟${PLAIN}"
 echo ""
 
+# 检查是否已安装
+check_installed() {
+    if [[ -d "$INSTALL_DIR" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# 检测当前运行的模式
+detect_current_mode() {
+    if [[ -f "$INSTALL_DIR/panel.log" ]] && ps aux | grep -v grep | grep -q "python3.*app.py"; then
+        echo "panel"
+    elif [[ -f "$INSTALL_DIR/client.log" ]] && ps aux | grep -v grep | grep -q "python3.*client.py"; then
+        echo "client"
+    else
+        echo ""
+    fi
+}
+
 # 安装依赖
 install_dependencies() {
     echo -e "${YELLOW}正在安装必要依赖...${PLAIN}"
@@ -51,14 +71,15 @@ install_dependencies() {
     pip3 install flask psutil requests --break-system-packages 2>/dev/null || pip3 install flask psutil requests
 }
 
-# 克隆项目
+# 克隆或更新项目
 clone_project() {
     echo -e "${YELLOW}正在克隆项目...${PLAIN}"
     
     # 如果目录已存在，更新代码
     if [[ -d "$INSTALL_DIR" ]]; then
-        echo -e "${YELLOW}检测到已存在的安装目录，正在更新...${PLAIN}"
+        echo -e "${GREEN}检测到已存在的安装，正在更新...${PLAIN}"
         cd "$INSTALL_DIR" && git pull
+        echo -e "${GREEN}✅ 项目更新完成！${PLAIN}"
     else
         # 创建父目录（如果不存在）
         PARENT_DIR=$(dirname "$INSTALL_DIR")
@@ -74,6 +95,7 @@ clone_project() {
             echo -e "${RED}克隆失败，请检查网络连接或目录权限${PLAIN}"
             exit 1
         fi
+        echo -e "${GREEN}✅ 项目克隆完成！${PLAIN}"
     fi
 }
 
@@ -92,6 +114,7 @@ start_panel() {
     
     # 停止已有的进程
     pkill -f app.py 2>/dev/null
+    sleep 1
     
     # 启动面板
     nohup python3 app.py > panel.log 2>&1 &
@@ -122,15 +145,21 @@ start_client() {
     
     cd "$INSTALL_DIR" || exit
     
-    read -p "请输入面板服务器的公网 IP: " master_ip
-    read -p "请为这台 VPS 起个名字: " vps_name
-    
-    # 动态修改配置文件
-    sed -i "s|SERVER_URL = .*|SERVER_URL = \"http://${master_ip}:5000/api/report\"|" client.py
-    sed -i "s|SERVER_NAME = .*|SERVER_NAME = \"${vps_name}\"|" client.py
+    # 检查是否已经配置过
+    if grep -q "http://.*:5000/api/report" client.py 2>/dev/null; then
+        echo -e "${GREEN}检测到已配置的客户端，直接启动...${PLAIN}"
+    else
+        read -p "请输入面板服务器的公网 IP: " master_ip
+        read -p "请为这台 VPS 起个名字: " vps_name
+        
+        # 动态修改配置文件
+        sed -i "s|SERVER_URL = .*|SERVER_URL = \"http://${master_ip}:5000/api/report\"|" client.py
+        sed -i "s|SERVER_NAME = .*|SERVER_NAME = \"${vps_name}\"|" client.py
+    fi
     
     # 停止已有的进程
     pkill -f client.py 2>/dev/null
+    sleep 1
     
     # 启动客户端
     nohup python3 client.py > client.log 2>&1 &
@@ -138,11 +167,35 @@ start_client() {
     sleep 2
     
     echo -e "${GREEN}✅ 客户端启动成功！${PLAIN}"
-    echo -e "${GREEN}📡 正在上报至: http://${master_ip}:5000/api/report${PLAIN}"
-    echo -e "${GREEN}🏷️  服务器名称: ${vps_name}${PLAIN}"
+    echo -e "${GREEN}� 安装目录: ${INSTALL_DIR}${PLAIN}"
     echo ""
     echo -e "${YELLOW}使用以下命令查看日志:${PLAIN}"
     echo -e "  tail -f ${INSTALL_DIR}/client.log"
+}
+
+# 更新并重启（重复执行时使用）
+update_and_restart() {
+    echo -e "${YELLOW}正在更新项目...${PLAIN}"
+    
+    # 安装依赖
+    install_dependencies
+    
+    # 更新项目
+    clone_project
+    
+    # 检测当前运行的模式
+    CURRENT_MODE=$(detect_current_mode)
+    
+    if [[ "$CURRENT_MODE" == "panel" ]]; then
+        echo -e "${GREEN}检测到面板端正在运行，正在重启...${PLAIN}"
+        start_panel
+    elif [[ "$CURRENT_MODE" == "client" ]]; then
+        echo -e "${GREEN}检测到客户端正在运行，正在重启...${PLAIN}"
+        start_client
+    else
+        echo -e "${YELLOW}未检测到运行中的服务，请选择启动模式${PLAIN}"
+        show_menu
+    fi
 }
 
 # 主菜单
@@ -180,20 +233,48 @@ show_menu() {
     esac
 }
 
-# 根据模式执行对应功能
-if [[ -n "$MODE" ]]; then
-    case $MODE in
-        panel)
-            install_dependencies
-            clone_project
-            start_panel
-            ;;
-        client)
-            install_dependencies
-            clone_project
-            start_client
-            ;;
-    esac
+# 主逻辑
+if check_installed; then
+    echo -e "${GREEN}检测到已安装的项目${PLAIN}"
+    echo -e "${YELLOW}安装目录: ${INSTALL_DIR}${PLAIN}"
+    echo ""
+    
+    # 如果指定了模式，执行对应操作
+    if [[ -n "$MODE" ]]; then
+        install_dependencies
+        clone_project
+        
+        case $MODE in
+            panel)
+                start_panel
+                ;;
+            client)
+                start_client
+                ;;
+        esac
+    else
+        # 重复执行时，自动更新并重启
+        update_and_restart
+    fi
 else
-    show_menu
+    # 首次安装
+    if [[ -n "$MODE" ]]; then
+        case $MODE in
+            panel)
+                install_dependencies
+                clone_project
+                start_panel
+                ;;
+            client)
+                install_dependencies
+                clone_project
+                start_client
+                ;;
+            *)
+                show_menu
+                ;;
+        esac
+    else
+        show_menu
+    fi
 fi
