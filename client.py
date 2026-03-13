@@ -8,7 +8,7 @@ import subprocess
 # --- 配置区 ---
 SERVER_URL = "http://38.76.221.101:5000/api/report" # 修改为你的面板服务器 IP
 SERVER_ID = socket.gethostname() # 默认使用主机名
-SERVER_NAME = "我的 VPS" # 给你的服务器起个好听的名字
+SERVER_NAME = socket.gethostname() # 默认使用主机名，可自定义
 INTERVAL = 5 # 汇报间隔（秒）
 LATENCY_TEST_IP = "202.96.128.86" # 延迟测试 IP，默认深圳电信
 # --------------
