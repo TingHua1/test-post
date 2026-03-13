@@ -94,6 +94,10 @@ def report():
     if not server_id:
         return jsonify({"status": "error", "message": "Missing ID"}), 400
     
+    # 保留已修改的服务器名称
+    if server_id in vps_data and 'name' in vps_data[server_id]:
+        data['name'] = vps_data[server_id]['name']
+    
     data['last_seen'] = time.time()
     data['online'] = True
     data['last_seen_fmt'] = datetime.fromtimestamp(data['last_seen']).strftime('%H:%M:%S')
