@@ -134,21 +134,17 @@
         <div class="card mb-5">
             <div class="card-body">
                 <div class="row text-center">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <h6 class="text-muted mb-1">在线服务器</h6>
                         <h4 class="text-primary">{{ online_count }} 台</h4>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <h6 class="text-muted mb-1">总下行流量</h6>
                         <h4 class="text-success">{{ total_in }} GB</h4>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <h6 class="text-muted mb-1">总上行流量</h6>
                         <h4 class="text-warning">{{ total_out }} GB</h4>
-                    </div>
-                    <div class="col-md-3">
-                        <h6 class="text-muted mb-1">总流量</h6>
-                        <h4 class="text-danger">{{ total_all }} GB</h4>
                     </div>
                 </div>
             </div>
@@ -213,9 +209,13 @@
                     </div>
 
                     <div class="bg-white bg-opacity-50 p-3 rounded-4 small border border-white">
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <span>⬇️ {{ server.net_in }}</span>
                             <span>⬆️ {{ server.net_out }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-success">总下行: {{ server.net_total_in }}</span>
+                            <span class="text-warning">总上行: {{ server.net_total_out }}</span>
                         </div>
                     </div>
 

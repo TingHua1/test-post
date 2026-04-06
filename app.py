@@ -53,10 +53,9 @@ def index():
     
     total_in = round(total_in, 2)
     total_out = round(total_out, 2)
-    total_all = round(total_in + total_out, 2)
     
     return render_template('index.html', servers=vps_data, logged_in=session.get('logged_in', False), 
-                           total_in=total_in, total_out=total_out, total_all=total_all, online_count=online_count)
+                           total_in=total_in, total_out=total_out, online_count=online_count)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
