@@ -121,7 +121,6 @@ clone_project() {
             # 下载项目文件
             cd "$INSTALL_DIR" || exit
             wget -O app.py https://raw.githubusercontent.com/TingHua1/test-post/main/app.py || true
-            wget -O server.py https://raw.githubusercontent.com/TingHua1/test-post/main/server.py || true
             wget -O client.py https://raw.githubusercontent.com/TingHua1/test-post/main/client.py || true
             wget -O install.sh https://raw.githubusercontent.com/TingHua1/test-post/main/install.sh || true
             
@@ -129,6 +128,7 @@ clone_project() {
             mkdir -p templates
             wget -O templates/index.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/index.html || true
             wget -O templates/login.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/login.html || true
+            wget -O templates/settings.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/settings.html || true
             
             echo -e "${GREEN}✅ 项目文件下载完成！${PLAIN}"
         else
@@ -148,12 +148,12 @@ clone_project() {
             echo -e "${YELLOW}检测到已存在的目录但不是 git 仓库，使用 wget 更新...${PLAIN}"
             cd "$INSTALL_DIR" || exit
             wget -O app.py https://raw.githubusercontent.com/TingHua1/test-post/main/app.py || true
-            wget -O server.py https://raw.githubusercontent.com/TingHua1/test-post/main/server.py || true
             wget -O client.py https://raw.githubusercontent.com/TingHua1/test-post/main/client.py || true
             wget -O install.sh https://raw.githubusercontent.com/TingHua1/test-post/main/install.sh || true
             mkdir -p templates
             wget -O templates/index.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/index.html || true
             wget -O templates/login.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/login.html || true
+            wget -O templates/settings.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/settings.html || true
             echo -e "${GREEN}✅ 项目文件更新完成！${PLAIN}"
         fi
     else
@@ -200,10 +200,21 @@ start_panel() {
     # 获取公网IP
     PUBLIC_IP=$(curl -s ipv4.icanhazip.com 2>/dev/null || echo "localhost")
     
+    # 尝试获取 API Key
+    API_KEY=""
+    if [[ -f "config.json" ]]; then
+        API_KEY=$(python3 -c "import json; print(json.load(open('config.json'))['api_key'])" 2>/dev/null)
+    fi
+    
     echo -e "${GREEN}✅ 面板端启动成功！${PLAIN}"
     echo -e "${GREEN}🌐 访问地址: http://${PUBLIC_IP}:5000${PLAIN}"
     echo -e "${GREEN}📁 安装目录: ${INSTALL_DIR}${PLAIN}"
     echo ""
+    if [[ -n "$API_KEY" ]]; then
+        echo -e "${YELLOW}🔑 API 密钥: ${API_KEY}${PLAIN}"
+        echo -e "${YELLOW}   (登录后也可在设置页面查看)${PLAIN}"
+        echo ""
+    fi
     echo -e "${YELLOW}使用以下命令查看日志:${PLAIN}"
     echo -e "  tail -f ${INSTALL_DIR}/panel.log"
 }
@@ -227,10 +238,12 @@ start_client() {
     else
         read -p "请输入面板服务器的公网 IP: " master_ip
         read -p "请为这台 VPS 起个名字: " vps_name
+        read -p "请输入面板 API 密钥 (在面板登录后可在设置中查看): " api_key
         
         # 动态修改配置文件
         sed -i "s|SERVER_URL = .*|SERVER_URL = \"http://${master_ip}:5000/api/report\"|" client.py
         sed -i "s|SERVER_NAME = .*|SERVER_NAME = \"${vps_name}\"|" client.py
+        sed -i "s|API_KEY = .*|API_KEY = \"${api_key}\"|" client.py
     fi
     
     # 停止已有的进程
@@ -243,7 +256,7 @@ start_client() {
     sleep 2
     
     echo -e "${GREEN}✅ 客户端启动成功！${PLAIN}"
-    echo -e "${GREEN}� 安装目录: ${INSTALL_DIR}${PLAIN}"
+    echo -e "${GREEN}📁 安装目录: ${INSTALL_DIR}${PLAIN}"
     echo ""
     echo -e "${YELLOW}使用以下命令查看日志:${PLAIN}"
     echo -e "  tail -f ${INSTALL_DIR}/client.log"

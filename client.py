@@ -6,25 +6,25 @@ import platform
 import subprocess
 
 # --- 配置区 ---
-SERVER_URL = "http://<面板IP>:5000/api/report" # 修改为你的面板服务器 IP
-SERVER_ID = socket.gethostname() # 默认使用主机名
-SERVER_NAME = socket.gethostname() # 默认使用主机名，可自定义
-INTERVAL = 5 # 汇报间隔（秒）
-LATENCY_TEST_IP = "202.96.128.86" # 延迟测试 IP，默认深圳电信
+SERVER_URL = "http://<面板IP>:5000/api/report"
+SERVER_ID = socket.gethostname()
+SERVER_NAME = socket.gethostname()
+INTERVAL = 5
+LATENCY_TEST_IP = "202.96.128.86"
+API_KEY = ""
 # --------------
 
 last_net_io = psutil.net_io_counters()
 
 def get_latency(host=LATENCY_TEST_IP):
     try:
-        # Linux 下 ping 一次，超时 1 秒
         output = subprocess.check_output(["ping", "-c", "1", "-W", "1", host], 
                                          stderr=subprocess.STDOUT, universal_newlines=True)
         if "time=" in output:
             return output.split("time=")[1].split(" ")[0] + " ms"
+        return "Timeout"
     except:
         return "N/A"
-    return "Timeout"
 
 def get_status():
     global last_net_io
@@ -32,12 +32,10 @@ def get_status():
     disk = psutil.disk_usage('/')
     current_net_io = psutil.net_io_counters()
     
-    # 计算网络速率 (KB/s)
     net_in_speed = (current_net_io.bytes_recv - last_net_io.bytes_recv) / INTERVAL / 1024
     net_out_speed = (current_net_io.bytes_sent - last_net_io.bytes_sent) / INTERVAL / 1024
     last_net_io = current_net_io
 
-    # 获取运行时间
     boot_time = psutil.boot_time()
     uptime_seconds = time.time() - boot_time
     days, remainder = divmod(uptime_seconds, 86400)
@@ -68,12 +66,39 @@ def get_status():
 
 def run():
     print(f"🚀 星汐探针客户端 (增强版) 已启动，正在上报至 {SERVER_URL}...")
+    retry_count = 0
+    max_retries = 3
+    
     while True:
         try:
             status = get_status()
-            requests.post(SERVER_URL, json=status, timeout=5)
+            headers = {}
+            if API_KEY:
+                headers['Authorization'] = f'Bearer {API_KEY}'
+            
+            response = None
+            for attempt in range(max_retries):
+                try:
+                    response = requests.post(SERVER_URL, json=status, timeout=5, headers=headers)
+                    if response.status_code == 200:
+                        retry_count = 0
+                        break
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        time.sleep(1)
+                    continue
+            
+            if response and response.status_code != 200:
+                print(f"❌ 上报失败 (HTTP {response.status_code}): {response.text}")
+                retry_count += 1
+                if retry_count > 10:
+                    print(f"⚠️  连续失败次数过多，请检查配置")
+                    retry_count = 10
+            
         except Exception as e:
             print(f"❌ 上报失败: {e}")
+            retry_count += 1
+        
         time.sleep(INTERVAL)
 
 if __name__ == "__main__":
