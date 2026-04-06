@@ -74,7 +74,7 @@ install_dependencies() {
         dnf install -y python3 python3-pip git
     elif [[ -f /usr/bin/yum ]]; then
         yum install -y python3 python3-pip git
-    elif [[ -f /usr/bin/apk ]] || [[ -f /sbin/apk ]]; then
+    elif [[ -f /usr/bin/apk ]]; then
         # Alpine Linux
         apk update
         apk add python3 py3-pip git
@@ -97,15 +97,8 @@ install_dependencies() {
     fi
     
     # 安装 Python 依赖
-    if [[ -f /usr/bin/apk ]] || [[ -f /sbin/apk ]]; then
-        # Alpine Linux
-        $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed 2>/dev/null || \
-        $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed
-    else
-        # 其他 Linux 系统
-        $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed 2>/dev/null || \
-        $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed
-    fi
+    $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed 2>/dev/null || \
+    $PIP_CMD install flask psutil requests --break-system-packages --ignore-installed
 }
 
 # 克隆或更新项目
@@ -136,7 +129,6 @@ clone_project() {
             mkdir -p templates
             wget -O templates/index.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/index.html || true
             wget -O templates/login.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/login.html || true
-            wget -O templates/settings.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/settings.html || true
             
             echo -e "${GREEN}✅ 项目文件下载完成！${PLAIN}"
         else
@@ -162,7 +154,6 @@ clone_project() {
             mkdir -p templates
             wget -O templates/index.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/index.html || true
             wget -O templates/login.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/login.html || true
-            wget -O templates/settings.html https://raw.githubusercontent.com/TingHua1/test-post/main/templates/settings.html || true
             echo -e "${GREEN}✅ 项目文件更新完成！${PLAIN}"
         fi
     else

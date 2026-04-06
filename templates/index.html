@@ -129,6 +129,30 @@
             <strong>💡 管理提示：</strong>您已登录为管理员，可以修改服务器名称或删除离线服务器。
         </div>
         {% endif %}
+        
+        <!-- 总流量统计卡片 -->
+        <div class="card mb-5">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h6 class="text-muted mb-1">在线服务器</h6>
+                        <h4 class="text-primary">{{ online_count }} 台</h4>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-muted mb-1">总下行流量</h6>
+                        <h4 class="text-success">{{ total_in }} GB</h4>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-muted mb-1">总上行流量</h6>
+                        <h4 class="text-warning">{{ total_out }} GB</h4>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-muted mb-1">总流量</h6>
+                        <h4 class="text-danger">{{ total_all }} GB</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="row">
             {% for id, server in servers.items() %}

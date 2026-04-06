@@ -6,7 +6,7 @@ import platform
 import subprocess
 
 # --- 配置区 ---
-SERVER_URL = "http://38.76.221.101:5000/api/report" # 修改为你的面板服务器 IP
+SERVER_URL = "http://<面板IP>:5000/api/report" # 修改为你的面板服务器 IP
 SERVER_ID = socket.gethostname() # 默认使用主机名
 SERVER_NAME = socket.gethostname() # 默认使用主机名，可自定义
 INTERVAL = 5 # 汇报间隔（秒）

@@ -28,12 +28,35 @@ def login_required(f):
 @app.route('/')
 def index():
     now = time.time()
+    total_in = 0.0
+    total_out = 0.0
+    online_count = 0
+    
     for sid in vps_data:
         if now - vps_data[sid]['last_seen'] > 30:
             vps_data[sid]['online'] = False
         else:
             vps_data[sid]['online'] = True
-    return render_template('index.html', servers=vps_data, logged_in=session.get('logged_in', False))
+            online_count += 1
+        
+        # 计算总流量
+        if 'net_total_in' in vps_data[sid]:
+            try:
+                total_in += float(vps_data[sid]['net_total_in'].replace('GB', ''))
+            except:
+                pass
+        if 'net_total_out' in vps_data[sid]:
+            try:
+                total_out += float(vps_data[sid]['net_total_out'].replace('GB', ''))
+            except:
+                pass
+    
+    total_in = round(total_in, 2)
+    total_out = round(total_out, 2)
+    total_all = round(total_in + total_out, 2)
+    
+    return render_template('index.html', servers=vps_data, logged_in=session.get('logged_in', False), 
+                           total_in=total_in, total_out=total_out, total_all=total_all, online_count=online_count)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
